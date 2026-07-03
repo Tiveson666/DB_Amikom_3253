@@ -10,13 +10,35 @@ class EventController extends Controller
 {
     public function showDetail()
     {
-        return view('event-detail');
+        // Old direct detail route is no longer supported.
+        return redirect()->route('home');
     }
 
-    public function anies()
-    {
-        return view('checkout');
+   public function store(Request $request)
+{
+     // Menerapkan validasi data request dari pengguna
+     $data = $request->validate([
+        'category_id' => 'required|exists:categories,id',
+        'title' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'date' => 'required|date',
+        'location' => 'required|string|max:255',
+        'price' => 'required|numeric|min:0',
+        'stock' => 'required|numeric|min:1',
+        'poster' => 'nullable|image|max:2048' // Maksimal 2MB
+    ]);
+
+    if ($request->hasFile('poster')) {
+        // Simpan ke direktori storage/app/public/posters
+        $data['poster_path'] = $request->file('poster')->store('posters', 'public');
     }
+
+     // Menyimpan data yang telah divalidasi ke dalam tabel menggunakan Model
+     \App\Models\Event::create($data);
+
+     return redirect()->route('admin.events.index')->with('success', 'Data Event berhasil ditambahkan.');
+}
+
 
     public function ticket()
     {
@@ -28,10 +50,15 @@ class EventController extends Controller
         return view('admin.events');
     }
 
-    public function show()
-    {
-        return view('event');
-    }
+    public function show(\App\Models\Event $event)
+{
+   // Mengambil daftar kategori untuk keperluan menu footer
+    $categories = \App\Models\Category::all();
+    
+    // Me-render view dengan membawa data kategori dan data spesifik acara tersebut
+    return view('event-detail', compact('categories', 'event'));
+}
+
 
     public function destroy(Event $event)
     {
@@ -46,19 +73,29 @@ class EventController extends Controller
     }
 
     public function update(Request $request, Event $event)
-    {
-        $data = $request->validate([
-            'category_id'  => 'required',
-            'title'        => 'required|string|max:255',
-            'description'  => 'required|string',
-            'date'         => 'required|date',
-            'location'     => 'required|string|max:255',
-            'price'        => 'required|numeric',
-            'stock'        => 'required|numeric',
-        ]);
+{
+   $data = $request->validate([
+        'category_id' => 'required|exists:categories,id',
+        'title' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'date' => 'required|date',
+        'location' => 'required|string|max:255',
+        'price' => 'required|numeric|min:0',
+        'stock' => 'required|numeric|min:1',
+        'poster' => 'nullable|image|max:2048'
+    ]); 
 
-        $event->update($data);
-
-        return redirect()->route('admin.events.index')->with('success', 'Rincian data event berhasil diperbarui.');
+    if ($request->hasFile('poster')) {
+        // Hapus gambar lama jika sebelumnya sudah memiliki poster
+        if ($event->poster_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($event->poster_path);
+        }
+        // Upload gambar baru
+        $data['poster_path'] = $request->file('poster')->store('posters', 'public');
     }
+
+    $event->update($data);
+    return redirect()->route('admin.events.index')->with('success', 'Event berhasil diperbarui.');
+}
+
 }

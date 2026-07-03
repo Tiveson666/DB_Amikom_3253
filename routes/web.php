@@ -12,9 +12,11 @@ use App\Http\Controllers\Admin\AuthController;
 
 // ─── USER AREA ────────────────────────────────────────────────
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/event/{id}', [EventController::class, 'show'])->name('events.show');
+Route::get('/events/{event}', [\App\Http\Controllers\EventController::class, 'show'])->name('events.show');
 Route::get('/checkout', [EventController::class, 'checkout'])->name('checkout');
 Route::get('/my-ticket', [EventController::class, 'ticket'])->name('ticket');
+Route::get('/checkout/{event}', [App\Http\Controllers\CheckoutController::class, 'create'])->name('checkout.create');
+Route::post('/checkout/{event}', [App\Http\Controllers\CheckoutController::class, 'store'])->name('checkout.store');
 
 Route::get('/login', fn() => redirect()->route('admin.login'))->name('login');
 
@@ -38,6 +40,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+        Route::get('transactions', [App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('transactions.index');
     }); 
 
 }); 
