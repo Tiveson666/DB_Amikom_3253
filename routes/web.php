@@ -23,12 +23,12 @@ Route::get('/login', fn() => redirect()->route('admin.login'))->name('login');
 // ─── ADMIN AREA ───────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->group(function () {
 
-    
+
     Route::get('login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login'])->name('login.post');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    
+
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
@@ -41,6 +41,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
         Route::get('transactions', [App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('transactions.index');
-    }); 
+    });
 
-}); 
+});
+Route::post('/midtrans/callback', [\App\Http\Controllers\MidtransWebhookController::class, 'handle']);
+Route::get('/payment/{order_id}', [\App\Http\Controllers\CheckoutController::class, 'payment'])->name('checkout.payment');
+Route::get('/success/{order_id}', [\App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
